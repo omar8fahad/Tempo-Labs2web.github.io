@@ -5,6 +5,7 @@ import Header from "./Header";
 import CategoryGrid from "./CategoryGrid";
 import AchievementBanner from "./AchievementBanner";
 import Footer from "./Footer";
+import { getAchievementData, initializeData } from "../lib/storage";
 
 const HomePage = () => {
   const navigate = useNavigate();
@@ -14,13 +15,31 @@ const HomePage = () => {
 
   // State for achievement data
   const [achievementData, setAchievementData] = useState({
-    dailyProgress: 35,
-    currentStreak: 7,
-    totalCompletions: 124,
+    dailyProgress: 0,
+    currentStreak: 0,
+    totalCompletions: 0,
   });
 
   // State for Hijri date
   const [hijriDate, setHijriDate] = useState("١٤ رمضان ١٤٤٥");
+
+  // Initialize data and load achievements on mount
+  useEffect(() => {
+    // Initialize local storage data
+    initializeData();
+
+    // Load achievement data
+    const data = getAchievementData();
+    setAchievementData(data);
+
+    // Set up interval to refresh achievement data every minute
+    const interval = setInterval(() => {
+      const refreshedData = getAchievementData();
+      setAchievementData(refreshedData);
+    }, 60000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   // Handle theme toggle
   const handleThemeToggle = () => {
@@ -47,7 +66,6 @@ const HomePage = () => {
 
   // Handle category click
   const handleCategoryClick = (categoryId: string) => {
-    console.log(`Navigating to category: ${categoryId}`);
     // Navigate to the appropriate category page
     switch (categoryId) {
       case "morning":

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "../components/ui/button";
@@ -20,6 +20,7 @@ import {
   Vibration,
   Palette,
 } from "lucide-react";
+import { getSettings, saveSettings, AppSettings } from "../lib/storage";
 
 const themeOptions = [
   {
@@ -71,6 +72,24 @@ const Settings = () => {
   const [soundVolume, setSoundVolume] = useState(70);
   const [vibrationIntensity, setVibrationIntensity] = useState(50);
   const [selectedTheme, setSelectedTheme] = useState("green");
+  const [morningTime, setMorningTime] = useState("05:00");
+  const [eveningTime, setEveningTime] = useState("16:00");
+  const [sleepTime, setSleepTime] = useState("22:00");
+
+  // Load settings from local storage on component mount
+  useEffect(() => {
+    const settings = getSettings();
+    setIsDarkMode(settings.isDarkMode);
+    setSoundEnabled(settings.soundEnabled);
+    setVibrationEnabled(settings.vibrationEnabled);
+    setNotificationsEnabled(settings.notificationsEnabled);
+    setSoundVolume(settings.soundVolume);
+    setVibrationIntensity(settings.vibrationIntensity);
+    setSelectedTheme(settings.theme);
+    setMorningTime(settings.morningNotificationTime);
+    setEveningTime(settings.eveningNotificationTime);
+    setSleepTime(settings.sleepNotificationTime);
+  }, []);
 
   const handleThemeToggle = () => {
     setIsDarkMode(!isDarkMode);
@@ -86,8 +105,21 @@ const Settings = () => {
   };
 
   const handleSaveSettings = () => {
-    // In a real app, we would save settings to local storage or a database
-    console.log("Settings saved");
+    // Save settings to local storage
+    const settings: AppSettings = {
+      isDarkMode,
+      theme: selectedTheme,
+      soundEnabled,
+      soundVolume,
+      vibrationEnabled,
+      vibrationIntensity,
+      notificationsEnabled,
+      morningNotificationTime: morningTime,
+      eveningNotificationTime: eveningTime,
+      sleepNotificationTime: sleepTime,
+    };
+
+    saveSettings(settings);
     navigate("/");
   };
 
@@ -195,42 +227,36 @@ const Settings = () => {
                     <div className="space-y-2">
                       <Label className="font-arabic">تنبيه أذكار الصباح</Label>
                       <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
-                        <span>5:00 صباحاً</span>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="font-arabic"
-                        >
-                          تغيير
-                        </Button>
+                        <input
+                          type="time"
+                          value={morningTime}
+                          onChange={(e) => setMorningTime(e.target.value)}
+                          className="bg-gray-100 dark:bg-gray-700 rounded p-2"
+                        />
                       </div>
                     </div>
 
                     <div className="space-y-2">
                       <Label className="font-arabic">تنبيه أذكار المساء</Label>
                       <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
-                        <span>4:00 مساءً</span>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="font-arabic"
-                        >
-                          تغيير
-                        </Button>
+                        <input
+                          type="time"
+                          value={eveningTime}
+                          onChange={(e) => setEveningTime(e.target.value)}
+                          className="bg-gray-100 dark:bg-gray-700 rounded p-2"
+                        />
                       </div>
                     </div>
 
                     <div className="space-y-2">
                       <Label className="font-arabic">تنبيه أذكار النوم</Label>
                       <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
-                        <span>10:00 مساءً</span>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="font-arabic"
-                        >
-                          تغيير
-                        </Button>
+                        <input
+                          type="time"
+                          value={sleepTime}
+                          onChange={(e) => setSleepTime(e.target.value)}
+                          className="bg-gray-100 dark:bg-gray-700 rounded p-2"
+                        />
                       </div>
                     </div>
                   </div>

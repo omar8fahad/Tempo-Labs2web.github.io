@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "../components/ui/button";
@@ -9,70 +9,39 @@ import {
   TabsTrigger,
 } from "../components/ui/tabs";
 import { ArrowLeft, Calendar, Trophy, Award, Star } from "lucide-react";
-
-interface DailyRecord {
-  date: string;
-  morning: boolean;
-  evening: boolean;
-  sleep: boolean;
-  ruqyah: boolean;
-}
-
-const generateMockData = () => {
-  const today = new Date();
-  const records: DailyRecord[] = [];
-
-  // Generate 30 days of mock data
-  for (let i = 0; i < 30; i++) {
-    const date = new Date(today);
-    date.setDate(today.getDate() - i);
-
-    records.push({
-      date: date.toISOString().split("T")[0],
-      morning: Math.random() > 0.3,
-      evening: Math.random() > 0.4,
-      sleep: Math.random() > 0.5,
-      ruqyah: Math.random() > 0.7,
-    });
-  }
-
-  return records;
-};
+import { getDailyRecords, getAchievementData } from "../lib/storage";
+import { DailyRecord } from "../lib/storage";
 
 const Achievements = () => {
   const navigate = useNavigate();
-  const [records] = useState<DailyRecord[]>(generateMockData());
+  const [records, setRecords] = useState<DailyRecord[]>([]);
+  const [achievementData, setAchievementData] = useState({
+    dailyProgress: 0,
+    currentStreak: 0,
+    totalCompletions: 0,
+  });
+
+  // Load data from local storage on component mount
+  useEffect(() => {
+    const storedRecords = getDailyRecords();
+    setRecords(storedRecords);
+
+    const data = getAchievementData();
+    setAchievementData(data);
+  }, []);
 
   const handleBack = () => {
     navigate("/");
   };
 
   // Calculate statistics
-  const totalCompletions = records.reduce((acc, record) => {
-    return (
-      acc +
-      (record.morning ? 1 : 0) +
-      (record.evening ? 1 : 0) +
-      (record.sleep ? 1 : 0) +
-      (record.ruqyah ? 1 : 0)
-    );
-  }, 0);
+  const totalCompletions = achievementData.totalCompletions;
+  const currentStreak = achievementData.currentStreak;
 
   const morningCompletions = records.filter((r) => r.morning).length;
   const eveningCompletions = records.filter((r) => r.evening).length;
   const sleepCompletions = records.filter((r) => r.sleep).length;
   const ruqyahCompletions = records.filter((r) => r.ruqyah).length;
-
-  // Calculate current streak
-  let currentStreak = 0;
-  for (let i = 0; i < records.length; i++) {
-    const record = records[i];
-    if (record.morning || record.evening || record.sleep || record.ruqyah) {
-      currentStreak++;
-    } else {
-      break;
-    }
-  }
 
   // Format date to Hijri (this is a simplified mock implementation)
   const formatToHijri = (dateStr: string) => {
@@ -188,7 +157,10 @@ const Achievements = () => {
                 معدل الإكمال
               </p>
               <p className="text-2xl font-bold">
-                {Math.round((totalCompletions / (records.length * 4)) * 100)}%
+                {records.length > 0
+                  ? Math.round((totalCompletions / (records.length * 4)) * 100)
+                  : 0}
+                %
               </p>
             </div>
           </motion.div>
@@ -212,7 +184,7 @@ const Achievements = () => {
                 <div
                   className="h-2.5 rounded-full bg-amber-500"
                   style={{
-                    width: `${(morningCompletions / records.length) * 100}%`,
+                    width: `${records.length > 0 ? (morningCompletions / records.length) * 100 : 0}%`,
                   }}
                 ></div>
               </div>
@@ -229,7 +201,7 @@ const Achievements = () => {
                 <div
                   className="h-2.5 rounded-full bg-indigo-500"
                   style={{
-                    width: `${(eveningCompletions / records.length) * 100}%`,
+                    width: `${records.length > 0 ? (eveningCompletions / records.length) * 100 : 0}%`,
                   }}
                 ></div>
               </div>
@@ -246,7 +218,7 @@ const Achievements = () => {
                 <div
                   className="h-2.5 rounded-full bg-blue-500"
                   style={{
-                    width: `${(sleepCompletions / records.length) * 100}%`,
+                    width: `${records.length > 0 ? (sleepCompletions / records.length) * 100 : 0}%`,
                   }}
                 ></div>
               </div>
@@ -263,7 +235,7 @@ const Achievements = () => {
                 <div
                   className="h-2.5 rounded-full bg-emerald-500"
                   style={{
-                    width: `${(ruqyahCompletions / records.length) * 100}%`,
+                    width: `${records.length > 0 ? (ruqyahCompletions / records.length) * 100 : 0}%`,
                   }}
                 ></div>
               </div>
@@ -340,48 +312,54 @@ const Achievements = () => {
 
             <TabsContent value="list" className="space-y-4">
               <div className="space-y-2 max-h-96 overflow-y-auto">
-                {records.map((record, index) => {
-                  const completedCount =
-                    (record.morning ? 1 : 0) +
-                    (record.evening ? 1 : 0) +
-                    (record.sleep ? 1 : 0) +
-                    (record.ruqyah ? 1 : 0);
+                {records.length > 0 ? (
+                  records.map((record, index) => {
+                    const completedCount =
+                      (record.morning ? 1 : 0) +
+                      (record.evening ? 1 : 0) +
+                      (record.sleep ? 1 : 0) +
+                      (record.ruqyah ? 1 : 0);
 
-                  return (
-                    <div
-                      key={index}
-                      className="flex justify-between items-center p-3 border rounded-md border-gray-200 dark:border-gray-700"
-                    >
-                      <div>
-                        <p className="font-arabic">
-                          {formatToHijri(record.date)}
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {new Date(record.date).toLocaleDateString("ar-SA")}
-                        </p>
-                      </div>
+                    return (
+                      <div
+                        key={index}
+                        className="flex justify-between items-center p-3 border rounded-md border-gray-200 dark:border-gray-700"
+                      >
+                        <div>
+                          <p className="font-arabic">
+                            {formatToHijri(record.date)}
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {new Date(record.date).toLocaleDateString("ar-SA")}
+                          </p>
+                        </div>
 
-                      <div className="flex space-x-2">
-                        <div
-                          className={`w-3 h-3 rounded-full ${record.morning ? "bg-amber-500" : "bg-gray-300 dark:bg-gray-600"}`}
-                        ></div>
-                        <div
-                          className={`w-3 h-3 rounded-full ${record.evening ? "bg-indigo-500" : "bg-gray-300 dark:bg-gray-600"}`}
-                        ></div>
-                        <div
-                          className={`w-3 h-3 rounded-full ${record.sleep ? "bg-blue-500" : "bg-gray-300 dark:bg-gray-600"}`}
-                        ></div>
-                        <div
-                          className={`w-3 h-3 rounded-full ${record.ruqyah ? "bg-emerald-500" : "bg-gray-300 dark:bg-gray-600"}`}
-                        ></div>
-                      </div>
+                        <div className="flex space-x-2">
+                          <div
+                            className={`w-3 h-3 rounded-full ${record.morning ? "bg-amber-500" : "bg-gray-300 dark:bg-gray-600"}`}
+                          ></div>
+                          <div
+                            className={`w-3 h-3 rounded-full ${record.evening ? "bg-indigo-500" : "bg-gray-300 dark:bg-gray-600"}`}
+                          ></div>
+                          <div
+                            className={`w-3 h-3 rounded-full ${record.sleep ? "bg-blue-500" : "bg-gray-300 dark:bg-gray-600"}`}
+                          ></div>
+                          <div
+                            className={`w-3 h-3 rounded-full ${record.ruqyah ? "bg-emerald-500" : "bg-gray-300 dark:bg-gray-600"}`}
+                          ></div>
+                        </div>
 
-                      <div className="text-sm font-medium">
-                        {completedCount}/4
+                        <div className="text-sm font-medium">
+                          {completedCount}/4
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })
+                ) : (
+                  <div className="text-center py-8 text-gray-500 dark:text-gray-400 font-arabic">
+                    لا توجد سجلات بعد. ابدأ بإكمال الأذكار اليومية لتظهر هنا.
+                  </div>
+                )}
               </div>
             </TabsContent>
           </Tabs>

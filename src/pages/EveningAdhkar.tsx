@@ -68,14 +68,14 @@ const EveningAdhkar = () => {
   };
 
   const handleComplete = () => {
-    // In a real app, we would save completion status to local storage or a database
-    console.log("Evening adhkar completed");
+    // Save completion status to local storage
     navigate("/");
   };
 
   return (
     <DhikrList
       title="أذكار المساء"
+      category="evening"
       dhikrs={eveningAdhkar}
       onBack={handleBack}
       onComplete={handleComplete}

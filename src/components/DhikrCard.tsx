@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
-import { CheckCircle, ArrowRight, ArrowLeft } from "lucide-react";
+import { CheckCircle, ArrowRight, ArrowLeft, SkipForward } from "lucide-react";
 
 interface DhikrCardProps {
   dhikrText: string;
@@ -12,6 +12,7 @@ interface DhikrCardProps {
   onComplete?: () => void;
   onNext?: () => void;
   onPrevious?: () => void;
+  onSkip?: () => void;
 }
 
 const DhikrCard = ({
@@ -22,6 +23,7 @@ const DhikrCard = ({
   onComplete = () => {},
   onNext = () => {},
   onPrevious = () => {},
+  onSkip = () => {},
 }: DhikrCardProps) => {
   const [currentCount, setCurrentCount] = useState(count);
   const [isCompleted, setIsCompleted] = useState(false);
@@ -41,6 +43,13 @@ const DhikrCard = ({
         onComplete();
       }
     }
+  };
+
+  const handleSkip = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsCompleted(true);
+    onComplete();
+    onSkip();
   };
 
   const progressPercentage = ((count - currentCount) / count) * 100;
@@ -108,6 +117,19 @@ const DhikrCard = ({
           <p className="text-sm text-gray-600 dark:text-gray-400 font-arabic">
             {isCompleted ? "تم الانتهاء من هذا الذكر" : "انقر للعد"}
           </p>
+
+          {/* Skip button */}
+          {!isCompleted && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSkip}
+              className="mt-4 text-gray-600 dark:text-gray-300 font-arabic"
+            >
+              <SkipForward className="h-4 w-4 mr-2" />
+              تخطي
+            </Button>
+          )}
         </div>
 
         {/* Navigation buttons */}

@@ -69,14 +69,14 @@ const Ruqyah = () => {
   };
 
   const handleComplete = () => {
-    // In a real app, we would save completion status to local storage or a database
-    console.log("Ruqyah completed");
+    // Save completion status to local storage
     navigate("/");
   };
 
   return (
     <DhikrList
       title="الرقية الشرعية"
+      category="ruqyah"
       dhikrs={ruqyahAdhkar}
       onBack={handleBack}
       onComplete={handleComplete}

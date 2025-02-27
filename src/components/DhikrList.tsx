@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import DhikrCard from "./DhikrCard";
 import { Button } from "./ui/button";
 import { ArrowLeft, Check } from "lucide-react";
+import { recordCompletion } from "../lib/storage";
 
 interface Dhikr {
   id: string;
@@ -15,12 +16,14 @@ interface Dhikr {
 interface DhikrListProps {
   title: string;
   dhikrs: Dhikr[];
+  category: "morning" | "evening" | "sleep" | "ruqyah";
   onComplete?: () => void;
   onBack?: () => void;
 }
 
 const DhikrList = ({
   title = "أذكار الصباح",
+  category = "morning",
   dhikrs = [
     {
       id: "1",
@@ -57,6 +60,8 @@ const DhikrList = ({
     } else if (completedDhikrs.length === dhikrs.length) {
       // All dhikrs completed, show completion screen or return to categories
       onComplete();
+      // Record completion in storage
+      recordCompletion(category);
     }
   };
 
@@ -78,7 +83,26 @@ const DhikrList = ({
     }, 1500);
   };
 
+  const handleSkip = () => {
+    const currentDhikr = dhikrs[currentIndex];
+    if (!completedDhikrs.includes(currentDhikr.id)) {
+      setCompletedDhikrs([...completedDhikrs, currentDhikr.id]);
+    }
+
+    // Move to next dhikr immediately
+    setTimeout(() => {
+      handleNext();
+    }, 500);
+  };
+
   const progressPercentage = (completedDhikrs.length / dhikrs.length) * 100;
+
+  // Update local storage when all dhikrs are completed
+  useEffect(() => {
+    if (completedDhikrs.length === dhikrs.length && dhikrs.length > 0) {
+      recordCompletion(category);
+    }
+  }, [completedDhikrs, dhikrs.length, category]);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pt-4 pb-20">
@@ -129,6 +153,7 @@ const DhikrList = ({
               onComplete={handleDhikrComplete}
               onNext={handleNext}
               onPrevious={handlePrevious}
+              onSkip={handleSkip}
             />
           ) : (
             <motion.div
